@@ -1,0 +1,12 @@
+Package: robustarchitecture
+Title: Estimate Genomic Architecture parameters using robust statistics
+Version: 0.0.1
+Authors@R: person("Daniel", "Lawson", email = "dan.lawson@bristol.ac.uk", role = c("aut", "cre"))
+Description: robustarchitecture is a package to estimate genomic architecture parameters - i.e. the relationship between minor allele frequency and effect size - using only extreme effect SNPs. This makes the inference robust to estimation issues, and model mis-specification issues.
+Depends: R (>= 3.3)
+License: GPL-3
+Encoding: UTF-8
+LazyData: true
+Imports: stats, utils, methods
+Suggests: 
+RoxygenNote: 7.1.1
