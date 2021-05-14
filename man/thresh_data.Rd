@@ -17,3 +17,6 @@ A dataframe the same shape as provided with only common SNPs retained.
 \description{
 Assuming the first column is frequency, return only rows where f>=t.
 }
+\seealso{
+\code{\link{make_test_data}} which simulates the data and gives a complete example.
+}

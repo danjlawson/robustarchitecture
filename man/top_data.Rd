@@ -17,3 +17,6 @@ A dataframe the same shape as provided with only the top k SNPs.
 \description{
 Filter data to keep only the top k by proportion of variance explained, which must be provided in a column called 'propexplained'.
 }
+\seealso{
+\code{\link{make_test_data}} which simulates the data and gives a complete example.
+}

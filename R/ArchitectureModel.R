@@ -166,7 +166,7 @@ lossfunction=function(ss){
     ## }
     if(sum(ss[,"count2"])<=1) return(-Inf) # terrible score: no data
     if(sum(ss[,"count1"])<=1) return(-Inf) # terrible score: no data
-    if(sum(ss[,"count0"]>0)<=5) return(-Inf) # terrible score: no data
+    if(sum(ss[,"count0"]>0)<=4) return(-Inf) # terrible score: no data
 
     ss[,"wt"]=ss[,"count0"] 
     if(sum(ss[,"wt"])==0) return(-Inf)
@@ -247,7 +247,7 @@ fullsearch=function(dat,
 #' @param ... Additional parameters to \code{\link[stats]{optim}}.
 #' @return A vector of length \code{nbs} of estimates of \code{s}.
 #' @export
-#' @seealso \code{\link{linesearch}} to explore a range of s, or \code{\link{\code{\link{fullsearch}} }} to search a single dataset.
+#' @seealso \code{\link{linesearch}} to explore a range of s, or \code{\link{fullsearch}} to search a single dataset.
 bootstrap=function(nbs,dat,bins=seq(0.05,0.5,by=0.025),thresholds=c(2.5,3),sigma=NULL,verbose=TRUE,s=0,...){
     ret=sapply(1:nbs,function(i){
         if(verbose)cat(paste("Bootstrap",i,"\n"))

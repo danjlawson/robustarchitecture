@@ -39,5 +39,5 @@ A vector of length \code{nbs} of estimates of \code{s}.
 Resample the data \code{dat} with replacement a given number \code{nbs} times, for each running \code{\link{fullsearch}} and reporting the inferred parameter.
 }
 \seealso{
-\code{\link{linesearch}} to explore a range of s, or \code{\link{\code{\link{fullsearch}} }} to search a single dataset.
+\code{\link{linesearch}} to explore a range of s, or \code{\link{fullsearch}} to search a single dataset.
 }

@@ -33,6 +33,7 @@ make_test_data=function(N,sigma=1,s=-1,frange=c(0.01,0.5)){
 #' @param t The desired threshold
 #' @return A dataframe the same shape as provided with only common SNPs retained.
 #' @export
+#' @seealso \code{\link{make_test_data}} which simulates the data and gives a complete example.
 thresh_data=function(testdata,t){
     testdata=testdata[testdata[,1]>=t,,drop=FALSE]
 }
@@ -45,6 +46,7 @@ thresh_data=function(testdata,t){
 #' @param k The number of SNPs to retain
 #' @return A dataframe the same shape as provided with only the top k SNPs.
 #' @export
+#' @seealso \code{\link{make_test_data}} which simulates the data and gives a complete example.
 top_data=function(testdata,k=100){
     to=order(testdata[,"propexplained"])
     testdata[utils::tail(to,n=k),,drop=FALSE]
