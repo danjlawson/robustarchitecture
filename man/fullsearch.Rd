@@ -6,34 +6,48 @@
 \usage{
 fullsearch(
   dat,
-  bins = seq(0.05, 0.5, by = 0.025),
+  bins = defaultbins(),
   thresholds = c(2.5, 3),
-  s = 0,
   sigma = NULL,
-  range = c(-2, 2),
-  ...
+  method = c("linesearch", "optimize"),
+  nlinesearch = 2,
+  nline = 21,
+  range = c(-2, 2)
 )
 }
 \arguments{
 \item{dat}{A data frame of (f,beta) pairs}
 
-\item{bins}{(Default: seq(0.05,0.5,by=0.025)) the histogram bins to use}
+\item{bins}{(Default: \code{\link{defaultbins}}) the histogram bins to use}
 
-\item{thresholds}{(Default: c(2.5,3)) the tail areas to compare (in s.d units).}
+\item{thresholds}{(Default :\code{\link{defaultthresholds}}) the tail areas to compare (in s.d units).}
 
-\item{s}{(Default: 0) Initial value of the search}
+\item{sigma}{(Default: NULL, meaning use the best value) Genomic architecture sigma. Don't change unless you know what you are doing...}
 
-\item{sigma}{(Default: NULL, meaning use the best value) Genomic architecture sigma}
+\item{method}{(Default: c("linesearch","optimize")) The set of all methods to use (out of "linesearch", "optimize" and "Brent"). Good values are c("linesearch","optimize"), which tries to find global maxima, and "Brent" which tries to find a local maxima only, but is slightly faster. Only specify up to one of "Brent" and "optimize".}
 
-\item{range}{(Default: c(-2,2)) The lower and upper bounds provided to}
+\item{nlinesearch}{(Defaul: 1) Number of linesearch parameters to evaluate, controlling the resolution near the edges of the valid range.}
 
-\item{...}{Additional parameters to \code{\link[stats]{optim}}. Note: You cannot provide  \code{control} as this is already provided.}
+\item{nline}{(Defaul: 21) Number of linesearch parameters to evaluate in .}
+
+\item{range}{(Default: c(-2,2)) The lower and upper bounds provided to \code{\link{linesearch}} to find a region that returns a finite score.}
 }
 \value{
-A list as returned by \code{\link[stats]{optim}}, with additionally \code{dat}, \code{thresholds}, \code{bins}, \code{range} and \code{sigma} as provided, and \code{s} as inferred.
+A list as returned by the optimiser, with additionally \code{dat}, \code{thresholds}, \code{bins}, \code{range} and \code{sigma} as provided, and \code{s} as inferred.
 }
 \description{
-Optimize \code{\link{lossfunctionp}} using  \code{\link[stats]{optim}} with \code{method="Brent"}.
+Optimize \code{\link{lossfunctionp}}. For basic usage, just give \code{dat}
+and it should do everything else for you. You sometimes have to
+change \code{thresholds} to fit the shape of your data; check this with
+\code{\link{architectureplot}}.
+
+This is a 1-D non-convex optimization problem. The first challenge is that many
+parameters don't have a finite loss, so we first do a \code{\link{linesearch}}
+to identify a valid range.
+
+We then either do a sequence of linesearches to arrive at a region, or go straight for a
+convex optimizer ("optimize" or "Brent" from \code{\link[stats]{optim}}). Line searches
+are slower but cope better with small datasets.
 }
 \seealso{
 \code{\link{linesearch}} to explore a range of s, or \code{\link{bootstrap}} to generate a distribution of estimates of s.

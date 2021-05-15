@@ -7,11 +7,10 @@
 bootstrap(
   nbs,
   dat,
-  bins = seq(0.05, 0.5, by = 0.025),
+  bins = defaultbins(),
   thresholds = c(2.5, 3),
   sigma = NULL,
   verbose = TRUE,
-  s = 0,
   ...
 )
 }
@@ -20,17 +19,15 @@ bootstrap(
 
 \item{dat}{A data frame of (f,beta) pairs}
 
-\item{bins}{(default: seq(0.05,0.5,by=0.025)) the histogram bins to use}
+\item{bins}{(default: \code{\link{defaultbins}}) the histogram bins to use}
 
-\item{thresholds}{(Default: c(2.5,3)) the tail areas to compare (in s.d units).}
+\item{thresholds}{(Default: \code{\link{defaultthresholds}}) the tail areas to compare (in s.d units).}
 
 \item{sigma}{(Default: NULL, meaning use the best value) Genomic architecture sigma}
 
 \item{verbose}{(Default: TRUE) Whether to print iteration progress.}
 
-\item{s}{(Default: 0) Initial value of the search}
-
-\item{...}{Additional parameters to \code{\link[stats]{optim}}.}
+\item{...}{Additional parameters to \code{\link{fullsearch}}.}
 }
 \value{
 A vector of length \code{nbs} of estimates of \code{s}.

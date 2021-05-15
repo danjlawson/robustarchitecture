@@ -11,7 +11,7 @@ annotatearchitecture(dat, s, thresholds = c(2.5, 3), sigma = NULL)
 
 \item{s}{The architecture model value for s}
 
-\item{thresholds}{(Default: c(2.5,3)) The architecture thresholds to be used in s.d. units.}
+\item{thresholds}{(Default: \code{\link{defaultthresholds}}) The architecture thresholds to be used in s.d. units.}
 
 \item{sigma}{(Default: NULL) The sigma to use for the data. Default: use that estimated from the data.}
 }

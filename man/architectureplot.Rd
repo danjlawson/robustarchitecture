@@ -6,7 +6,7 @@
 \usage{
 architectureplot(
   dat,
-  res = NULL,
+  detail = NULL,
   mycols = c("#AAAAAA44", "#0000FF44", "#FF000044"),
   mar = c(6, 5, 3, 5),
   xlim = c(0.01, 0.5),
@@ -35,7 +35,7 @@ architectureplot(
 \arguments{
 \item{dat}{Data frame containing MAF and beta in first two columns.}
 
-\item{res}{(Default: NULL)}
+\item{detail}{(Default: NULL) The results of a call to \code{\link{detail}}; if NULL, the inference with default settings for thresholds and bins are used.,}
 
 \item{mycols}{(Default: c(grey,blue,red)) three colours, one for each class of SNP}
 
@@ -57,15 +57,15 @@ architectureplot(
 
 \item{show.data}{(Default: TRUE) whether to plot the data.}
 
-\item{show.bins}{(Default: TRUE) whether to plot the bins, if res provided.}
+\item{show.bins}{(Default: TRUE) whether to plot the bins.}
 
-\item{show.res}{(Default: TRUE) whether to show the result proportions, if res provided.}
+\item{show.res}{(Default: TRUE) whether to show the result proportions, if detail provided.}
 
 \item{data.pch}{(Default: 19) pch for data.}
 
 \item{data.cex}{(Default: 0.5) cex for data.}
 
-\item{bins.lty}{(Default: 2) line type of the bin boundaries (if res provided).}
+\item{bins.lty}{(Default: 2) line type of the bin boundaries (if detail provided).}
 
 \item{res.scale}{(Default: 1) vertical scaling of the results. Set to values < 1 to restrict the class proportion data into the bottom segment, which is often excluded from architecture plots.}
 

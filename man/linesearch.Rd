@@ -7,7 +7,7 @@
 linesearch(
   nout,
   dat,
-  bins = seq(0.05, 0.5, by = 0.025),
+  bins = defaultbins(),
   thresholds = c(2.5, 3),
   range = c(-2, 2),
   sigma = NULL
@@ -18,9 +18,9 @@ linesearch(
 
 \item{dat}{A data frame of (f,beta) pairs}
 
-\item{bins}{(Default: seq(0.05,0.5,by=0.025)) the histogram bins to use}
+\item{bins}{(Default: \code{\link{defaultbins}}) the histogram bins to use}
 
-\item{thresholds}{(Default: c(2.5,3)) the tail areas to compare (in s.d units).}
+\item{thresholds}{(Default: \code{\link{defaultthresholds}}) the tail areas to compare (in s.d units).}
 
 \item{range}{(Default: c(-2,2)) The range of s values to evaluate between}
 

@@ -7,8 +7,8 @@
 lossfunctionss(
   dat,
   s,
-  bins = seq(0.05, 0.5, by = 0.025),
-  thresholds = c(2.5, 3),
+  bins = defaultbins(),
+  thresholds = defaultthresholds(),
   sigma = NULL
 )
 }
@@ -17,9 +17,9 @@ lossfunctionss(
 
 \item{s}{The selection coefficient assumed in the architecture model}
 
-\item{bins}{(Default: bins=seq(0.05,0.5,by=0.025) The histogram bin boundaries assumed for creating summary statistcs, which need to be large enough to contain enough samples and small enough to retain resolution.}
+\item{bins}{(Default: bins=\code{\link{defaultbins}} The histogram bin boundaries assumed for creating summary statistcs, which need to be large enough to contain enough samples and small enough to retain resolution.}
 
-\item{thresholds}{(Default: \code{c(2.5,3)}) Standard deviation units for the summary statistic generation. Only SNPs above the first are used for model learning. The proportion above the second is predicted from the number above the first.}
+\item{thresholds}{(Default: \code{\link{defaultthresholds}}) Standard deviation units for the summary statistic generation. Only SNPs above the first are used for model learning. The proportion above the second is predicted from the number above the first.}
 
 \item{sigma}{(Default: NULL meaning estimate from data) The scale parameter of the Genomic Architecture. Do not provide this with any search procedure as the results can be poor.}
 }

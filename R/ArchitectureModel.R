@@ -15,6 +15,39 @@ getbeta=function(f,sigma,s){
 }
 
 ###############################
+#' @title Default bin locations for general purpose usage
+#'
+#' @description
+#' Histogram bins that should be ok for most use; these are:
+#' 
+#' seq(0.05,0.5,by=0.025)
+#' 
+#' @return a vector of bin separators
+#' @export
+defaultbins=function(){
+    seq(0.05,0.5,by=0.025)
+}
+
+###############################
+#' @title Default thresholds
+#'
+#' @description
+#' Thresholds that should be accurate if they can be used. These are:
+#' 
+#' c(2.5,3)
+#'
+#' in standard deviation units.
+#'
+#' If you don't have data that has this large a variance, you may choose a smaller
+#' threshold pair; c(1,2) is about as small as you should go.
+#' 
+#' @return A pair of threshold values, the first for data to be considered, the second to be predicted.
+#' @export
+defaultthresholds=function(){
+    c(2.5,3)
+}
+
+###############################
 #' @title Get the best estimate of sigma conditional on s 
 #'
 #' @description
@@ -64,7 +97,7 @@ getsigma=function(ratio,thresholds){
 #' 
 #' @param dat data frame with the first two columns being "f" and "beta"
 #' @param s The architecture model value for s
-#' @param thresholds (Default: c(2.5,3)) The architecture thresholds to be used in s.d. units.
+#' @param thresholds (Default: \code{\link{defaultthresholds}}) The architecture thresholds to be used in s.d. units.
 #' @param sigma (Default: NULL) The sigma to use for the data. Default: use that estimated from the data.
 #' @return The class of each datapoint
 #' @export
@@ -96,32 +129,33 @@ annotatearchitecture=function(dat,s,
 #' 
 #' @param dat A dataframe containing summary statistics from a GWAS/BayesS/LDAK analysis. In its first two columns we need: MAF (f) and beta.
 #' @param s The selection coefficient assumed in the architecture model
-#' @param bins (Default: bins=seq(0.05,0.5,by=0.025) The histogram bin boundaries assumed for creating summary statistcs, which need to be large enough to contain enough samples and small enough to retain resolution.
-#' @param thresholds (Default: \code{c(2.5,3)}) Standard deviation units for the summary statistic generation. Only SNPs above the first are used for model learning. The proportion above the second is predicted from the number above the first.
+#' @param bins (Default: bins=\code{\link{defaultbins}} The histogram bin boundaries assumed for creating summary statistcs, which need to be large enough to contain enough samples and small enough to retain resolution.
+#' @param thresholds (Default: \code{\link{defaultthresholds}}) Standard deviation units for the summary statistic generation. Only SNPs above the first are used for model learning. The proportion above the second is predicted from the number above the first.
 #' @param sigma (Default: NULL meaning estimate from data) The scale parameter of the Genomic Architecture. Do not provide this with any search procedure as the results can be poor.
 #' @return A data frame containing: bins, count0 (The number of SNPs in the bin), count (the number of SNPs above the first threshold), count2 (the number of SNPs above the second threshold)
 #' @export
 #' @seealso \code{\link{lossfunction}} to turn this summary into a loss, and \code{\link{fullsearch}} to search over s.
 lossfunctionss=function(dat,s,
-                        bins=seq(0.05,0.5,by=0.025),
-                        thresholds=c(2.5,3),sigma=NULL){
+                        bins=defaultbins(),
+                        thresholds=defaultthresholds(),
+                        sigma=NULL){
     
     if(is.null(sigma)) {
-        sigma=getsigma(dat[,"beta"]/getbeta(dat[,"f"],1,s),
+        sigma=getsigma(dat[,2]/getbeta(dat[,1],1,s),
                        thresholds)
     }
     dat=annotatearchitecture(dat,s,thresholds,sigma)
     
     ## Remove SNPs that are too rare to be included in the base class
     if(any(dat$class==1)){
-        fmin=min(dat[dat$class==1,"f"])
+        fmin=min(dat[dat$class==1,1])
         dat=dat[dat$f>=fmin,,drop=FALSE]
     }
     
     ## Iterate through SNPs in order of frequency, and assign them to bins
     dat=dat[order(dat[,1]),]
     if(dim(dat)[1]==0) return(ret)
-    tbins=sapply(dat[,"f"],function(x)which.min(x>bins))
+    tbins=sapply(dat[,1],function(x)which.min(x>bins))
     ubins=sort(unique(tbins))
     ret=t(sapply(1:length(bins),function(x){
         tmp=dat[tbins==x,]
@@ -168,9 +202,10 @@ lossfunction=function(ss){
     if(sum(ss[,"count1"])<=1) return(-Inf) # terrible score: no data
     if(sum(ss[,"count0"]>0)<=4) return(-Inf) # terrible score: no data
 
-    ss[,"wt"]=ss[,"count0"] 
+    ss[,"wt"]=ss[,"count1"] #+ss[,"count0"] 
     if(sum(ss[,"wt"])==0) return(-Inf)
-    stats::weighted.mean(ss[,"loss"],ss[,"wt"])
+    ##    stats::weighted.mean(ss[,"loss"],ss[,"wt"])
+    sum(ss[,"loss"])
 }
 
 ###############################
@@ -190,44 +225,129 @@ lossfunctionp=function(s,ref){
     lossfunction(tss)
 }
 
+###############################
+#' @title Details of an architecture
+#'
+#' @description
+#'
+#' Details of an architecture, which may be inferred or defined manually.
+#' 
+#' @param dat A data frame of (f,beta) pairs
+#' @param s The architecture parameter to use
+#' @param thresholds (Default :\code{\link{defaultthresholds}}) the tail areas to compare (in s.d units).
+#' @param bins (Default: \code{\link{defaultbins}}) the histogram bins to use
+#' @param range (Default: c(-2,2) The range of s that could be considered with finite values (if known).
+#' @param range0 (Default: c(-2,2) The range of s that was chosen by the user.
+#' @param sigma (Default: NULL, meaning use the best value) Genomic architecture sigma. Don't change unless you know what you are doing...
+#' @export
+#' @seealso \code{\link{architectureplot}} for visualisation.
+detail=function(dat,
+                s,
+                thresholds=defaultthresholds(),
+                bins=defaultbins(),
+                range=c(-2,2),
+                range0=c(-2,2),
+                sigma=NULL) {
+    ret=list()
+    ret$dat=dat
+    if(!all(is.null(sigma))){
+        ret$sigma=getsigma(dat[,2]/getbeta(dat[,1],1,s),
+                           thresholds)
+    }else{
+        ret$sigma=sigma
+    }
+    ret$ss=lossfunctionss(dat,s,bins,thresholds,sigma)
+    ret$thresholds=thresholds
+    ret$bins=bins
+    ret$range0=range0
+    ret$range=range
+    ret$s=s
+    ret
+}
+
+
 #' @title Search s for the best parameter
 #'
 #' @description
 #'
-#' Optimize \code{\link{lossfunctionp}} using  \code{\link[stats]{optim}} with \code{method="Brent"}.
+#' Optimize \code{\link{lossfunctionp}}. For basic usage, just give \code{dat}
+#' and it should do everything else for you. You sometimes have to
+#' change \code{thresholds} to fit the shape of your data; check this with
+#' \code{\link{architectureplot}}.
+#'
+#' This is a 1-D non-convex optimization problem. The first challenge is that many
+#' parameters don't have a finite loss, so we first do a \code{\link{linesearch}}
+#' to identify a valid range.
+#'
+#' We then either do a sequence of linesearches to arrive at a region, or go straight for a
+#' convex optimizer ("optimize" or "Brent" from \code{\link[stats]{optim}}). Line searches
+#' are slower but cope better with small datasets.
 #' 
 #' @param dat A data frame of (f,beta) pairs
-#' @param bins (Default: seq(0.05,0.5,by=0.025)) the histogram bins to use
-#' @param thresholds (Default: c(2.5,3)) the tail areas to compare (in s.d units).
-#' @param s (Default: 0) Initial value of the search
-#' @param sigma (Default: NULL, meaning use the best value) Genomic architecture sigma
-#' @param ... Additional parameters to \code{\link[stats]{optim}}. Note: You cannot provide  \code{control} as this is already provided.
-#' @param range (Default: c(-2,2)) The lower and upper bounds provided to 
-#' @return A list as returned by \code{\link[stats]{optim}}, with additionally \code{dat}, \code{thresholds}, \code{bins}, \code{range} and \code{sigma} as provided, and \code{s} as inferred.
+#' @param bins (Default: \code{\link{defaultbins}}) the histogram bins to use
+#' @param thresholds (Default :\code{\link{defaultthresholds}}) the tail areas to compare (in s.d units).
+#' @param sigma (Default: NULL, meaning use the best value) Genomic architecture sigma. Don't change unless you know what you are doing...
+#' @param method (Default: c("linesearch","optimize")) The set of all methods to use (out of "linesearch", "optimize" and "Brent"). Good values are c("linesearch","optimize"), which tries to find global maxima, and "Brent" which tries to find a local maxima only, but is slightly faster. Only specify up to one of "Brent" and "optimize".
+#' @param nline (Defaul: 21) Number of linesearch parameters to evaluate in .
+#' @param nlinesearch (Defaul: 1) Number of linesearch parameters to evaluate, controlling the resolution near the edges of the valid range.
+#' @param range (Default: c(-2,2)) The lower and upper bounds provided to \code{\link{linesearch}} to find a region that returns a finite score.
+#' @return A list as returned by the optimiser, with additionally \code{dat}, \code{thresholds}, \code{bins}, \code{range} and \code{sigma} as provided, and \code{s} as inferred.
 #' @export
 #' @seealso \code{\link{linesearch}} to explore a range of s, or \code{\link{bootstrap}} to generate a distribution of estimates of s.
 fullsearch=function(dat,
-                    bins=seq(0.05,0.5,by=0.025),
-                    thresholds=c(2.5,3),s=0,sigma=NULL,range=c(-2,2),...){
-    ret=suppressWarnings(
-        stats::optim(s,
+                    bins=defaultbins(),
+                    thresholds=c(2.5,3),sigma=NULL,
+                    method=c("linesearch","optimize"),
+                    nlinesearch=2,
+                    nline=21,
+                    range=c(-2,2)
+                    ){
+    ## First we identify a valid region with linesearch
+    range0=range
+    testline=suppressWarnings(
+        linesearch(nline,dat,bins=bins,
+                   thresholds=thresholds,range=range,sigma=sigma)
+        )
+    testline[!is.finite(testline[,2]),2]<-NA
+    range=range(stats::na.omit(testline)[,1])
+
+    ## Second we apply this iteratively
+    if("linesearch"%in% method){
+        rangetest=range
+        for(i in 1:nlinesearch){
+            test=linesearch(nline,dat,bins=bins,
+                            thresholds=thresholds,range=rangetest,sigma=sigma)
+            rangetest=test[order(test[,2],decreasing=T)[1:2],1]
+        }
+        range=rangetest
+        ret=list(
+            par=test[order(test[,2],decreasing=T)[1],1],
+            value=test[order(test[,2],decreasing=T)[1],2]
+        )
+    }
+    ## Third we optimize locally
+    if("optimize" %in% method){
+        ret=stats::optimize(lossfunctionp,range,maximum=TRUE,
+                     ref=list(dat=dat,bins=bins,thresholds=thresholds,sigma=sigma))
+        ret$par=ret$maximum
+        ret$value=ret$objective
+    }else if("Brent" %in% method){
+        s=sum(range)/2 # Initial guess
+        ret=stats::optim(s,
           lossfunctionp,
           ref=list(dat=dat,bins=bins,thresholds=thresholds,sigma=sigma),
           method="Brent",
+##          method="L-BFGS-B",
           lower=range[1],upper=range[2],
-          control=list(fnscale=-1),
-          ...))
-    ret$dat=dat
-    ret$sigma=getsigma(dat[,"beta"]/getbeta(dat[,"f"],1,ret$par),
-                           thresholds)
-    ret$ss=lossfunctionss(dat,ret$par,bins,thresholds,ret$sigma)
-    ret$thresholds=thresholds
-    ret$bins=bins
-    ret$range=range
-    ret$s=ret$par
+          control=list(fnscale=-1))
+    }else{
+        stop("Invalid method")
+    }
     if(!is.finite(ret$value)){
         ret$s<-ret$par<-NA
         warning("No values of s result in valid data! You may need to reduce your bin range or increase your thresholds.")
+    }else{
+        ret=detail(dat,ret$par,thresholds,bins,range,range0,sigma)
     }
     ret
 }
@@ -239,22 +359,22 @@ fullsearch=function(dat,
 #'
 #' @param nbs The number of bootstrap samples to obtain. We recommend 20 for exploration, 100 for estimating standard deviations and more for estimating the shape of the distribution.
 #' @param dat A data frame of (f,beta) pairs
-#' @param bins (default: seq(0.05,0.5,by=0.025)) the histogram bins to use
-#' @param thresholds (Default: c(2.5,3)) the tail areas to compare (in s.d units).
-#' @param s (Default: 0) Initial value of the search
+#' @param bins (default: \code{\link{defaultbins}}) the histogram bins to use
+#' @param thresholds (Default: \code{\link{defaultthresholds}}) the tail areas to compare (in s.d units).
 #' @param sigma (Default: NULL, meaning use the best value) Genomic architecture sigma
 #' @param verbose (Default: TRUE) Whether to print iteration progress.
-#' @param ... Additional parameters to \code{\link[stats]{optim}}.
+#' @param ... Additional parameters to \code{\link{fullsearch}}.
 #' @return A vector of length \code{nbs} of estimates of \code{s}.
 #' @export
 #' @seealso \code{\link{linesearch}} to explore a range of s, or \code{\link{fullsearch}} to search a single dataset.
-bootstrap=function(nbs,dat,bins=seq(0.05,0.5,by=0.025),thresholds=c(2.5,3),sigma=NULL,verbose=TRUE,s=0,...){
+bootstrap=function(nbs,dat,bins=defaultbins(),
+                   thresholds=c(2.5,3),sigma=NULL,verbose=TRUE,...){
     ret=sapply(1:nbs,function(i){
         if(verbose)cat(paste("Bootstrap",i,"\n"))
         tdat=sample(1:dim(dat)[1],dim(dat)[1],replace=TRUE)
-        tres=suppressWarnings(fullsearch(dat=dat[tdat,,drop=FALSE],
+        tres=suppressWarnings(
+            fullsearch(dat=dat[tdat,,drop=FALSE],
                         bins=bins,
-                        s=s,
                         thresholds=thresholds,
                         sigma=sigma,
                         ...))
@@ -271,14 +391,14 @@ bootstrap=function(nbs,dat,bins=seq(0.05,0.5,by=0.025),thresholds=c(2.5,3),sigma
 #'
 #' @param nout The number of values to evaluate.
 #' @param dat A data frame of (f,beta) pairs
-#' @param bins (Default: seq(0.05,0.5,by=0.025)) the histogram bins to use
-#' @param thresholds (Default: c(2.5,3)) the tail areas to compare (in s.d units).
+#' @param bins (Default: \code{\link{defaultbins}}) the histogram bins to use
+#' @param thresholds (Default: \code{\link{defaultthresholds}}) the tail areas to compare (in s.d units).
 #' @param range (Default: c(-2,2)) The range of s values to evaluate between 
 #' @param sigma (Default: NULL, meaning use the best value) Genomic architecture sigma
 #' @return a dataframe contining s and the score for that s.
 #' @export
 #' @seealso \code{\link{fullsearch}} to infer a single p, or \code{\link{bootstrap}} to generate a distribution of estimates of s.
-linesearch=function(nout,dat,bins=seq(0.05,0.5,by=0.025),thresholds=c(2.5,3),range=c(-2,2),sigma=NULL){
+linesearch=function(nout,dat,bins=defaultbins(),thresholds=c(2.5,3),range=c(-2,2),sigma=NULL){
     tx=seq(range[1],range[2],length.out=nout)
     ty=sapply(tx,lossfunctionp,
               ref=list(dat=dat,
