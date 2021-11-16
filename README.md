@@ -14,7 +14,6 @@ remotes::install_github("danjlawson/robustarchitecture")
 
 ## Usage
 
-You should find usage straightforward if you follow the examples in the Clarity package:
 ```R
 library("robustarchitecture")
 help("robustarchitecture")
